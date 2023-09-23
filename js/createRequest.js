@@ -1,28 +1,22 @@
-const createRequest = (options = {}) => {
-  const xhr = new XMLHttpRequest();
-  xhr.open(options.method || "POST", options.url, true);
-  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  xhr.send(options.params);
-  xhr.onreadystatechange = () => {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          for (let key in response) {
-            if (response[key].err) {
-              alert(
-                `Ошибка обращения к базе данных ${response[key].err}: ${response[key].errMessage}`
-              );
-              return;
-            }
-          }
-          options.callback(response);
-        } catch (err) {
-          alert(`Ошибка ответа: ${err.message}`);
-        }
-      } else {
-        alert(`Ошибка запроса: ${xhr.status} ${xhr.statusText}`);
+function createRequest(method, url, data, callback) {
+  let xhr = new XMLHttpRequest();
+  xhr.open(method, url);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+  xhr.responseType = 'json';
+  xhr.onerror = function () {
+    console.error('Произошла ошибка при отправке запроса');
+    callback(null);
+  };
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4 && xhr.status >= 200 && xhr.status < 300) {
+      try {
+        let response = xhr.response;
+        callback(response);
+      } catch (error) {
+        console.error('Произошла ошибка: ', error);
+        callback(null);
       }
     }
   };
-};
+  xhr.send(data);
+}
